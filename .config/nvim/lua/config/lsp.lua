@@ -14,6 +14,7 @@ vim.lsp.enable('pyright')
 vim.lsp.enable('docker_ls')
 vim.lsp.enable('nginx_ls')
 vim.lsp.enable('tailwind_ls')
+vim.lsp.enable('go_ls')
 
 vim.api.nvim_create_autocmd('LspAttach', {
     callback = function(ev)
