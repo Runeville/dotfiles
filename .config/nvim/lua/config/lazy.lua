@@ -17,8 +17,8 @@ vim.opt.rtp:prepend(lazypath)
 
 vim.diagnostic.config({
     virtual_text = true, -- Виртуальные сообщения с ошибками
-    signs = true,     -- Подсветка ошибок с помощью знаков
-    underline = true, -- Подчеркивание ошибок
+    signs = true,        -- Подсветка ошибок с помощью знаков
+    underline = true,    -- Подчеркивание ошибок
     update_in_insert = true,
 })
 

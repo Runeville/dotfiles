@@ -17,6 +17,7 @@ return {
     -- can be found here https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json
     settings = {
         python = {
+            pythonPath = ".venv/bin/python",
             analysis = {
                 typeCheckingMode = "basic", -- или "strict" для более жёсткой проверки
                 autoSearchPaths = true,
