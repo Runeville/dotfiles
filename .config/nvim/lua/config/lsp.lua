@@ -1,44 +1,94 @@
--- lsp
+-- LSP
 --------------------------------------------------------------------------------
--- See https://gpanders.com/blog/whats-new-in-neovim-0-11/ for a nice overview
--- of how the lsp setup works in neovim 0.11+.
 
--- This actually just enables the lsp servers.
--- The configuration is found in the lsp folder inside the nvim config folder,
--- so in ~.config/lsp/lua_ls.lua for lua_ls, for example.
-vim.lsp.enable('lua_ls')
-vim.lsp.enable('rust_ls')
-vim.lsp.enable('ts_ls')
-vim.lsp.enable('svelte_ls')
-vim.lsp.enable('pyright')
-vim.lsp.enable('docker_ls')
-vim.lsp.enable('nginx_ls')
-vim.lsp.enable('tailwind_ls')
-vim.lsp.enable('go_ls')
+local lsp_servers = {
+    'lua_ls',
+    'rust_ls',
+    'ts_ls',
+    'svelte_ls',
+    'pyright',
+    'docker_ls',
+    'nginx_ls',
+    'tailwind_ls',
+    'go_ls',
+}
+
+for _, server in ipairs(lsp_servers) do
+    vim.lsp.enable(server)
+end
+
+vim.opt.completeopt = {
+    'menu',
+    'menuone',
+    'noinsert',
+    'fuzzy',
+    'popup',
+}
 
 vim.api.nvim_create_autocmd('LspAttach', {
     callback = function(ev)
         local client = vim.lsp.get_client_by_id(ev.data.client_id)
-        if client and client:supports_method(vim.lsp.protocol.Methods.textDocument_completion) then
-            vim.opt.completeopt = { 'menu', 'menuone', 'noinsert', 'fuzzy', 'popup' }
-            vim.lsp.completion.enable(true, client.id, ev.buf, { autotrigger = true })
-            vim.keymap.set('n', '<leader>df', vim.lsp.buf.definition, { desc = 'Go to definition' })
-            vim.keymap.set('n', '<leader>-k', vim.lsp.buf.hover, { desc = 'LSP Hover (show info)' })
-            vim.keymap.set('i', '<C-Space>', function()
-                vim.lsp.completion.get()
-            end)
+
+        if not client then
+            return
         end
+
+        if client:supports_method(vim.lsp.protocol.Methods.textDocument_completion) then
+            vim.lsp.completion.enable(true, client.id, ev.buf, {
+                autotrigger = true,
+            })
+
+            vim.keymap.set('i', '<C-Space>', vim.lsp.completion.get, {
+                buffer = ev.buf,
+                desc = 'Trigger LSP completion',
+            })
+        end
+
+        vim.keymap.set('n', '<leader>df', vim.lsp.buf.definition, {
+            buffer = ev.buf,
+            desc = 'Go to definition',
+        })
+
+        vim.keymap.set('n', '<leader>-k', vim.lsp.buf.hover, {
+            buffer = ev.buf,
+            desc = 'LSP Hover',
+        })
+    end,
+})
+
+-- Automatic completion
+--------------------------------------------------------------------------------
+
+local completion_timer = vim.uv.new_timer()
+
+vim.api.nvim_create_autocmd('TextChangedI', {
+    callback = function()
+        local line = vim.api.nvim_get_current_line()
+        local col = vim.api.nvim_win_get_cursor(0)[2]
+        local before_cursor = line:sub(1, col)
+
+        if not before_cursor:match('[%w_]+$') then
+            completion_timer:stop()
+            return
+        end
+
+        completion_timer:stop()
+
+        completion_timer:start(150, 0, vim.schedule_wrap(function()
+            if vim.fn.mode() ~= 'i' then
+                return
+            end
+
+            vim.lsp.completion.get()
+        end))
     end,
 })
 
 -- Diagnostics
-vim.diagnostic.config({
-    -- Use the default configuration
-    -- virtual_lines = true
+--------------------------------------------------------------------------------
 
-    -- Alternatively, customize specific options
+vim.diagnostic.config({
     virtual_lines = {
-        -- Only show virtual line diagnostics for the current cursor line
         current_line = true,
     },
 })
